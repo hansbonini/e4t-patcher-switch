@@ -1,0 +1,30 @@
+{
+  "translations": {
+    "Zelda: Link's Awakening (PT-BR)": {
+      "enabled": true,
+      "image_link": "https://www.e4t.com.br/imagens/switch/capa-zelda-o-despertar-de-link.png",
+      "link": "https://mega.nz/file/pAU2HLZY#ROcJpmEf9b5I30mI26WWpFBSce4tT536vw29rPR5dAc",
+      "size": "508 KB",
+      "installed": {
+        "uninstall": ["01006BB00C6F0000"]
+      }
+    },
+    "Sonic Forces (PT-BR)": {
+      "enabled": true,
+      "image_link": "https://www.e4t.com.br/imagens/switch/sonic-forces-capa.png",
+      "link": "https://mega.nz/file/hZEWmSbK#X7uswjEpw92CwVeD1LG2C2vHUTnI_maT5TehQI3rXwU",
+      "size": "313 MB",
+      "installed": {
+        "uninstall": [
+          "01001270012B6000",
+          "01001270012B6001",
+          "01001270012B6002",
+          "01001270012B6003",
+          "01001270012B6004",
+          "01001270012B6005",
+          "01001270012B6006"
+        ]
+      }
+    }
+  }
+}
