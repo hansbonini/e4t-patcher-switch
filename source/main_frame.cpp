@@ -39,6 +39,8 @@ MainFrame::MainFrame() : AppletFrame(true, true)
     nlohmann::ordered_json nxlinks = fs::parseJsonFile(translationsPath);
 
     this->setContentView(new ListExtraTab(contentType::translations, nxlinks));
+
+    this->registerAction("", brls::Key::B, [this] { return true; });
 }
 
 void MainFrame::draw(NVGcontext* vg, int x, int y, unsigned width, unsigned height, brls::Style* style, brls::FrameContext* ctx)
