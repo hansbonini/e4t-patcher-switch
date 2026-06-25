@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <regex>
 #include <string>
 #include <thread>
@@ -171,6 +172,8 @@ namespace download {
             std::string output;
 
             auto curl = curl_easy_init();
+            if (!curl) return "";
+
             curl_easy_setopt(curl, CURLOPT_URL, "https://g.api.mega.co.nz/cs");
             curl_easy_setopt(curl, CURLOPT_POST, 1L);
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
@@ -190,17 +193,34 @@ namespace download {
                 });
 
             curl_easy_perform(curl);
-
-            json response = json::parse(output);
-
             curl_easy_cleanup(curl);
 
+            if (output.empty())
+                return "";
+
+            json response;
+            try {
+                response = json::parse(output);
+            } catch (...) {
+                return "";
+            }
+
+            // Mega error response: [{"e": -3}] = quota exceeded, [{"e": -2}] = not found, etc.
+            if (!response.is_array() || response.empty())
+                return "";
+
+            if (response[0].contains("e"))
+                return "";
+
+            if (!response[0].contains("g"))
+                return "";
+
             s64 freeStorage;
-            s64 fileSize = response[0]["s"];
+            s64 fileSize = response[0]["s"].get<s64>();
             if (R_SUCCEEDED(fs::getFreeStorageSD(freeStorage)) && fileSize * 1.1 > freeStorage)
                 return "";
 
-            return response[0]["g"];
+            return response[0]["g"].get<std::string>();
         }
 
         std::string mega_node_key(std::string url)
@@ -290,12 +310,15 @@ namespace download {
         const char* out = output.c_str();
         CURL* curl = curl_easy_init();
         ntwrk_struct_t chunk = {0};
-        long status_code;
+        long status_code = 0;
+        CURLcode curl_result = CURLE_OK;
+        bool file_opened = false;
         time_old = std::chrono::steady_clock::now();
         dlold = 0.0f;
         bool can_download = true;
         bool is_mega = (url.find("mega.nz") != std::string::npos);
-        std::string real_url = is_mega ? mega_url(url) : url;
+
+        std::string real_url = url;
 
         if (is_mega) {
             std::string node_key = mega_node_key(url);
@@ -304,17 +327,24 @@ namespace download {
 
             chunk.aes = static_cast<Aes128CtrContext*>(malloc(sizeof(Aes128CtrContext)));
             aes128CtrContextCreate(chunk.aes, key.c_str(), iv.c_str());
+
+            real_url = mega_url(url);
+            if (real_url.empty()) {
+                status_code = 509;
+                // fall through — no early return, so cleanup and setStep always run
+            }
         }
 
-        if (curl) {
+        if (curl && !real_url.empty()) {
             FILE* fp = fopen(out, "wb");
             if (fp || *out == 0) {
+                if (fp) file_opened = true;
                 chunk.data = static_cast<u_int8_t*>(malloc(_1MiB));
                 chunk.data_size = _1MiB;
                 chunk.out = fp;
 
                 if (*out != 0) {
-                    can_download = is_mega ? !real_url.empty() : checkSize(curl, url);
+                    can_download = checkSize(curl, real_url);
                 }
 
                 if (can_download) {
@@ -331,24 +361,33 @@ namespace download {
                         curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
                         curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, download_progress);
                     }
-                    curl_easy_perform(curl);
-                    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status_code);
+                    curl_result = curl_easy_perform(curl);
+                    if (curl_result == CURLE_OK) {
+                        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &status_code);
+                    } else {
+                        status_code = 502; // network error (connection refused, DNS, timeout)
+                    }
 
                     if (fp && chunk.offset && can_download)
                         fwrite(chunk.data, 1, chunk.offset, fp);
 
                     curl_easy_cleanup(curl);
-                    ProgressEvent::instance().setStep(ProgressEvent::instance().getMax());
                 }
             }
         }
 
-        fclose(chunk.out);
+        if (chunk.out)
+            fclose(chunk.out);
+
         if (!can_download) {
-            brls::Application::crash("menus/errors/insufficient_storage"_i18n);
-            std::this_thread::sleep_for(std::chrono::microseconds(2000000));
-            brls::Application::quit();
-            res = {};
+            status_code = 507;
+        }
+
+        ProgressEvent::instance().setStep(ProgressEvent::instance().getMax());
+        ProgressEvent::instance().setStatusCode(status_code);
+
+        if (status_code >= 400 && file_opened) {
+            std::filesystem::remove(output);
         }
 
         if (*out == 0) {

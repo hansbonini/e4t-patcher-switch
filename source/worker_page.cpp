@@ -63,7 +63,7 @@ void WorkerPage::draw(NVGcontext* vg, int x, int y, unsigned width, unsigned hei
                 this->draw_page = false;
                 brls::Application::crash(fmt::format("menus/errors/error_message"_i18n, util::getErrorMessage(ProgressEvent::instance().getStatusCode())));
             }
-            if (ProgressEvent::instance().getInterupt()) {
+            else if (ProgressEvent::instance().getInterupt()) {
                 brls::Application::pushView(new MainFrame());
             }
             else {
@@ -103,6 +103,14 @@ void WorkerPage::layout(NVGcontext* vg, brls::Style* style, brls::FontStash* sta
         this->y + this->height / 2,
         style->CrashFrame.buttonWidth * 2,
         style->CrashFrame.buttonHeight);
+}
+
+void WorkerPage::willAppear(bool resetState)
+{
+    // Propagate willAppear to the ProgressDisplay so its ProgressSpinner
+    // starts the rotating animation (restartAnimation is called inside)
+    if (this->progressDisp)
+        this->progressDisp->willAppear(resetState);
 }
 
 void WorkerPage::doWork()

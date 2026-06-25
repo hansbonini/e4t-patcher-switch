@@ -103,6 +103,8 @@
   "errors": {
     "mariko_payload_missing": "Para atualizar o Atmosphère em Switches corrigidos o payload precisa ter o nome de 'payload.bin' e deve estar na raiz do seu microSD.",
     "insufficient_storage": "Não há espaço suficiente no seu microSD para executar esta operação.",
+            "mega_quota": "Mega download quota exceeded.\nPlease wait a few minutes and try again.",
+        "connection_failed": "Connection failed.\nCheck your internet connection and try again.",
     "error_message": "{}\nPor favor, tente novamente em alguns minutos. Se o problema persistir, por favor, abra um 'issue' no Github."
   }
 }

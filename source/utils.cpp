@@ -168,6 +168,15 @@ namespace util {
             case 503:
                 res = fmt::format("{0:}: Service Temporarily Unavailable", status_code);
                 break;
+            case 502:
+                res = "menus/errors/connection_failed"_i18n;
+                break;
+            case 507:
+                res = "menus/errors/insufficient_storage"_i18n;
+                break;
+            case 509:
+                res = "menus/errors/mega_quota"_i18n;
+                break;
             default:
                 res = fmt::format("error: {0:}", status_code);
                 break;
@@ -257,6 +266,38 @@ namespace util {
         logFile.close();
     }
 
+    // std::filesystem::remove_all uses recursion internally on newlib/devkitA64,
+    // which overflows the small stack of the WorkerPage thread on Atmosphere.
+    // This iterative version walks the tree with an explicit vector instead.
+    static void removeDirectoryIterative(const std::string& path)
+    {
+        if (!std::filesystem::exists(path))
+            return;
+
+        std::vector<std::string> dirs(1, path);
+        std::vector<std::string> files;
+        std::error_code ec;
+
+        for (size_t i = 0; i < dirs.size(); ++i)
+        {
+            for (auto& entry : std::filesystem::directory_iterator(dirs[i], ec))
+            {
+                if (ec) break;
+                auto entryPath = entry.path().string();
+                if (entry.is_directory())
+                    dirs.push_back(std::move(entryPath));
+                else
+                    files.push_back(std::move(entryPath));
+            }
+        }
+
+        for (const auto& file : files)
+            std::filesystem::remove(file, ec);
+
+        for (auto it = dirs.rbegin(); it != dirs.rend(); ++it)
+            std::filesystem::remove(*it, ec);
+    }
+
     void doDelete(std::vector<std::string> folders)
     {
         if (!folders.empty())
@@ -268,21 +309,21 @@ namespace util {
             std::string tmpFolder;
             std::string path = getContentsPath();
 
-            for (std::string f : folders) {
+            for (const std::string& f : folders) {
                 tmpFolder = f + "/";
-                std::filesystem::remove_all(path + tmpFolder);
-                index = tmpFolder.find_last_of("/");
+                removeDirectoryIterative(path + tmpFolder);
+                index = static_cast<int>(tmpFolder.find_last_of("/"));
                 tmpFolder = tmpFolder.substr(0, index);
 
                 while(tmpFolder.find_last_of("/") != std::string::npos)
                 {
-                    index = tmpFolder.find_last_of("/");
+                    index = static_cast<int>(tmpFolder.find_last_of("/"));
                     tmpFolder = tmpFolder.substr(0, index);
 
                     if (std::filesystem::exists(path + tmpFolder))
                     {
                         if (std::filesystem::is_empty(path + tmpFolder))
-                            std::filesystem::remove_all(path + tmpFolder);
+                            removeDirectoryIterative(path + tmpFolder);
                     }
                 }
 

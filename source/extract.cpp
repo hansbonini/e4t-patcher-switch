@@ -59,6 +59,10 @@ namespace extract {
         preWork(unzipper, workingPath, entries);
         std::set<std::string> ignoreList = fs::readLineByLine(fmt::format(FILES_IGNORE, BASE_FOLDER_NAME));
 
+        // Allocated once, reused for every entry — avoids heap fragmentation
+        // from repeated 1MB alloc/free inside the loop
+        std::vector<char> writeBuf(1024 * 1024);
+
         for (const auto& entry : entries) {
             if (ProgressEvent::instance().getInterupt()) {
                 break;
@@ -86,11 +90,27 @@ namespace extract {
                 continue;
             }
             else {
-                unzipper.extractEntry(entry.name);
+                std::string fullPath = workingPath + entry.name;
+                std::filesystem::path parent = std::filesystem::path(fullPath).parent_path();
+                if (!parent.empty() && !std::filesystem::exists(parent))
+                    std::filesystem::create_directories(parent);
+
+                // pubsetbuf must be called BEFORE opening the file, otherwise
+                // devkitA64's newlib libstdc++ ignores it and writes stay tiny.
+                // Allocate buffer once outside the loop in the caller scope.
+                std::filebuf fbuf;
+                fbuf.pubsetbuf(writeBuf.data(), writeBuf.size());
+                if (fbuf.open(fullPath, std::ios::out | std::ios::binary)) {
+                    std::ostream os(&fbuf);
+                    unzipper.extractEntryToStream(entry.name, os);
+                    fbuf.close();
+                }
+
                 if (entry.name.substr(0, 13) == "hekate_ctcaer") {
                     fs::copyFile("/" + entry.name, UPDATE_BIN_PATH);
                 }
             }
+            std::this_thread::yield();
             ProgressEvent::instance().incrementStep(1);
         }
         unzipper.close();

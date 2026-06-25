@@ -1,16 +1,18 @@
 #pragma once
 
+#include <atomic>
+
 class ProgressEvent
 {
 private:
     ProgressEvent() {}
-    int _current = 0;
-    int _max = 60;
-    double _now = 0;
-    double _total = 0;
-    double _speed = 0;
-    long _status_code = 0;
-    bool _interupt = false;
+    std::atomic<int> _current{0};
+    std::atomic<int> _max{60};
+    std::atomic<double> _now{0};
+    std::atomic<double> _total{0};
+    std::atomic<double> _speed{0};
+    std::atomic<long> _status_code{0};
+    std::atomic<bool> _interupt{false};
 
 public:
     ProgressEvent(const ProgressEvent&) = delete;
