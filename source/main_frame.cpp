@@ -4,6 +4,7 @@
 #include <fstream>
 #include <json.hpp>
 
+#include "download.hpp"
 #include "fs.hpp"
 #include "list_extra_tab.hpp"
 #include "utils.hpp"
@@ -28,15 +29,21 @@ MainFrame::MainFrame() : AppletFrame(true, true)
         "v" + std::string(AppVersion),
         R_SUCCEEDED(fs::getFreeStorageSD(freeStorage)) ? floor(((float)freeStorage / 0x40000000) * 100.0) / 100.0 : -1));
 
-    // Ensure translations.json exists on SD — copy from ROMFS on first run
+    // Fetch translations from remote URL, fallback to ROMFS on failure
     std::string translationsPath = fmt::format("/config/{}/translations.json", BASE_FOLDER_NAME);
-    if (!std::filesystem::exists(translationsPath)) {
+    nlohmann::ordered_json nxlinks;
+    long status = download::getRequest(TRANSLATIONS_URL, nxlinks);
+    if (status == 200 && nxlinks.contains("translations")) {
         fs::createTree(fmt::format("/config/{}/", BASE_FOLDER_NAME));
-        fs::copyFile("romfs:/translations.json", translationsPath);
+        std::ofstream out(translationsPath);
+        out << nxlinks.dump(2);
+    } else {
+        if (!std::filesystem::exists(translationsPath)) {
+            fs::createTree(fmt::format("/config/{}/", BASE_FOLDER_NAME));
+            fs::copyFile("romfs:/translations.json", translationsPath);
+        }
+        nxlinks = fs::parseJsonFile(translationsPath);
     }
-
-    // Load translations from local SD file
-    nlohmann::ordered_json nxlinks = fs::parseJsonFile(translationsPath);
 
     this->setContentView(new ListExtraTab(contentType::translations, nxlinks));
 

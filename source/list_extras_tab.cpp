@@ -47,7 +47,7 @@ void ListExtraTab::addItemToGrid(brls::View* item)
     currentRow->addView(item);
     itemsInCurrentRow++;
 
-    if (itemsInCurrentRow >= 2) {
+    if (itemsInCurrentRow >= 4) {
         this->finishCurrentRow();
     }
 }
@@ -179,37 +179,39 @@ void ListExtraTab::buildGrid(contentType type)
             }
         }
 
-        // Second pass: subscribe click events and add to grid
-        for (auto* item : gridItems)
-        {
-            const std::string text("menus/common/download"_i18n + std::string(item->getTitle()));
+    // Second pass: subscribe click events and add to grid
+    for (auto* item : gridItems)
+    {
+        const std::string text("menus/common/download"_i18n + std::string(item->getTitle()));
 
-            item->getClickEvent()->subscribe([this, type, text, item](brls::View* view) {
-                brls::StagedAppletFrame* stagedFrame = new brls::StagedAppletFrame();
-                stagedFrame->setTitle(fmt::format("menus/main/getting"_i18n, contentTypeFullNames[(int)type].data()));
+        item->getClickEvent()->subscribe([this, type, text, item](brls::View* view) {
+            brls::StagedAppletFrame* stagedFrame = new brls::StagedAppletFrame();
+            stagedFrame->setTitle(fmt::format("menus/main/getting"_i18n, contentTypeFullNames[(int)type].data()));
 
-                if (item->getInstalled())
-                {
-                    stagedFrame->addStage(new ListDownloadConfirmationPage(stagedFrame, DialogType::warning, "menus/main/translation_exists_warning"_i18n, "", "", false));
-                    stagedFrame->addStage(new WorkerPage(stagedFrame, "menus/common/deleting"_i18n, [this, type, item]() { util::doDelete(item->getItemFolders()); }));
-                }
-                else
-                {
-                    stagedFrame->addStage(new ConfirmPage(stagedFrame, text));
-                    stagedFrame->addStage(new WorkerPage(stagedFrame, "menus/common/downloading"_i18n, [this, type, item]() { util::downloadArchive(item->getUrl(), type); }));
-                    stagedFrame->addStage(new WorkerPage(stagedFrame, "menus/common/extracting"_i18n, [this, type]() { util::extractArchive(type); }));
-                }
+            if (item->getInstalled())
+            {
+                stagedFrame->addStage(new ListDownloadConfirmationPage(stagedFrame, DialogType::warning, "menus/main/translation_exists_warning"_i18n, "", "", false));
+                stagedFrame->addStage(new WorkerPage(stagedFrame, "menus/common/deleting"_i18n, [this, type, item]() { util::doDelete(item->getItemFolders()); }));
+            }
+            else
+            {
+                stagedFrame->addStage(new ConfirmPage(stagedFrame, text));
+                stagedFrame->addStage(new WorkerPage(stagedFrame, "menus/common/downloading"_i18n, [this, type, item]() { util::downloadArchive(item->getUrl(), type); }));
+                stagedFrame->addStage(new WorkerPage(stagedFrame, "menus/common/extracting"_i18n, [this, type]() { util::extractArchive(type); }));
+            }
 
-                stagedFrame->addStage(new ConfirmPage(stagedFrame, "menus/common/all_done"_i18n, true));
-                brls::Application::pushView(stagedFrame);
-            });
+            stagedFrame->addStage(new ConfirmPage(stagedFrame, "menus/common/all_done"_i18n, true));
+            brls::Application::pushView(stagedFrame);
+        });
 
-            this->addItemToGrid(item);
-        }
-
-        if (counter <= 0)
-            this->noItemsToDisplay();
+        this->addItemToGrid(item);
     }
+
+    this->finishCurrentRow();
+
+    if (counter <= 0)
+        this->noItemsToDisplay();
+}
     else {
         this->displayNotFound();
     }

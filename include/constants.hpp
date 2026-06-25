@@ -22,7 +22,7 @@ constexpr const char ROOT_PATH[] = "/";
 constexpr const char DOWNLOAD_PATH[] = "/config/{}/";
 constexpr const char CONFIG_PATH[] = "/config/{}/";
 
-constexpr const char NXLINKS_URL[] = "https://raw.githubusercontent.com/gamemoddesignbr/nx-links/master/nx-links-v204.json";
+constexpr const char TRANSLATIONS_URL[] = "https://raw.githubusercontent.com/hansbonini/e4t-patcher-switch/refs/heads/main/resources/translations.json";
 
 constexpr const char AMS_CONTENTS[] = "/atmosphere/contents/";
 constexpr const char AMS_PATH[] = "/atmosphere/";
