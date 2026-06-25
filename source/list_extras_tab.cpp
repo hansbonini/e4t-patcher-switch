@@ -186,15 +186,16 @@ void ListExtraTab::buildGrid(contentType type)
 
         item->getClickEvent()->subscribe([this, type, text, item](brls::View* view) {
             brls::StagedAppletFrame* stagedFrame = new brls::StagedAppletFrame();
-            stagedFrame->setTitle(fmt::format("menus/main/getting"_i18n, contentTypeFullNames[(int)type].data()));
 
             if (item->getInstalled())
             {
+                stagedFrame->setTitle("menus/common/deleting"_i18n);
                 stagedFrame->addStage(new ListDownloadConfirmationPage(stagedFrame, DialogType::warning, "menus/main/translation_exists_warning"_i18n, "", "", false));
                 stagedFrame->addStage(new WorkerPage(stagedFrame, "menus/common/deleting"_i18n, [this, type, item]() { util::doDelete(item->getItemFolders()); }));
             }
             else
             {
+                stagedFrame->setTitle(fmt::format("menus/main/getting"_i18n, contentTypeFullNames[(int)type].data()));
                 stagedFrame->addStage(new ConfirmPage(stagedFrame, text));
                 stagedFrame->addStage(new WorkerPage(stagedFrame, "menus/common/downloading"_i18n, [this, type, item]() { util::downloadArchive(item->getUrl(), type); }));
                 stagedFrame->addStage(new WorkerPage(stagedFrame, "menus/common/extracting"_i18n, [this, type]() { util::extractArchive(type); }));

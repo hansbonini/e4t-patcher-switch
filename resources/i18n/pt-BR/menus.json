@@ -14,7 +14,7 @@
   "common": {
     "download": "Arquivo a ser baixado:\n",
     "downloading": "Baixando…",
-    "deleting": "Removendo…",
+    "deleting": "Desinstalando Tradução",
     "from": "\n\nDe:\n",
     "extracting": "Extraindo…",
     "applet_mode_not_supported": "Esta função não está disponível no modo applet. Por favor, inicie o {} através do redirecionados de títulos para acessa-la.",
