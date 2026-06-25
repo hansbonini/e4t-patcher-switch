@@ -1,12 +1,14 @@
 {
   "translations": {
-    "Zelda: Link's Awakening (PT-BR)": {
+    "Naruto Ultimate Ninja Storm 3 Full Burst (PT-BR)": {
       "enabled": true,
-      "image_link": "https://www.e4t.com.br/imagens/switch/capa-zelda-o-despertar-de-link.png",
-      "link": "https://mega.nz/file/pAU2HLZY#ROcJpmEf9b5I30mI26WWpFBSce4tT536vw29rPR5dAc",
-      "size": "508 KB",
+      "image_link": "https://www.e4t.com.br/imagens/switch/naruto3fb-capa.png",
+      "link": "https://mega.nz/file/JVEyVbKQ#72uG0JZaCOzOt1yl9uDuJEzAwQ8-G4GC8WiOYcYWBUk",
+      "size": "470 MB",
       "installed": {
-        "uninstall": ["01006BB00C6F0000"]
+        "uninstall": [
+          "01006BB00800A000"
+        ]
       }
     },
     "Sonic Forces (PT-BR)": {
@@ -24,6 +26,15 @@
           "01001270012B6005",
           "01001270012B6006"
         ]
+      }
+    },
+    "Zelda: Link's Awakening (PT-BR)": {
+      "enabled": true,
+      "image_link": "https://www.e4t.com.br/imagens/switch/capa-zelda-o-despertar-de-link.png",
+      "link": "https://mega.nz/file/pAU2HLZY#ROcJpmEf9b5I30mI26WWpFBSce4tT536vw29rPR5dAc",
+      "size": "508 KB",
+      "installed": {
+        "uninstall": ["01006BB00C6F0000"]
       }
     }
   }
